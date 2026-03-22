@@ -1,3 +1,3 @@
 [workspace]
-members = ["tagd"]
+members = ["tagd", "taggers/*"]
 resolver = "3"

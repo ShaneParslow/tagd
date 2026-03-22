@@ -44,3 +44,7 @@ version = "0.1.0"
 dependencies = [
  "nix",
 ]
+
+[[package]]
+name = "tagd-std-mime"
+version = "0.1.0"
