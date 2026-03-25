@@ -7,7 +7,7 @@ use std::thread;
 /// Filesystem event that gets added to retag queue
 #[derive(Debug)]
 pub struct Event {
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
 /// Create threads for all event providers
