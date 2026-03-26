@@ -33,18 +33,20 @@ pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<Event>) {
                 continue;
             };
 
-            let path = get_path(fd);
-
-            tx.send(
-                Event {
-                    path,
-                }
-            ).expect("Failed to add event to queue");
+            let Some(path) = get_path(fd) else { continue };
+            tx.send(Event { path }).expect("Failed to add event to queue");
         }
     }
 }
 
 /// Get path from fd via proc
-fn get_path(fd: BorrowedFd) -> PathBuf {
-    std::fs::read_link(format!("/proc/self/fd/{}", fd.as_raw_fd())).expect("Failed to read fd path")
+fn get_path(fd: BorrowedFd) -> Option<PathBuf> {
+    let path = std::fs::read_link(format!("/proc/self/fd/{}", fd.as_raw_fd())).expect("Failed to read fd path");
+
+    // HACK: A path ending with " (deleted)" is actually valid, but this is how proc conveys
+    // that a backing file was deleted, and it will only result in the file not being indexed.
+    match path.to_str().expect("Failed to convert path to str").ends_with(" (deleted)") {
+        true => None,
+        false => Some(path),
+    }
 }
