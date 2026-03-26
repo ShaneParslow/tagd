@@ -39,9 +39,17 @@ fn main() {
         process::exit(1);
     });
 
+    let mime = mime_type.to_string();
+
+    // HACK: .file will output "cannot open `path` (No such file or directory)" without returning an error
+    if mime.starts_with("cannot open") {
+        eprintln!("File does not exist");
+        process::exit(1);
+    }
+
     let output = Output {
         tags: Tags {
-            mime: mime_type.to_string(),
+            mime,
         },
     };
 
