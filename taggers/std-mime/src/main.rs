@@ -16,6 +16,10 @@ struct Output {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
+    if args.len() == 2 && args[1] == "--tagd-info" {
+        process::exit(0);
+    }
+
     if args.len() != 2 {
         eprintln!("Usage: {} <file_path>", args[0]);
         process::exit(1);
