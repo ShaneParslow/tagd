@@ -1,5 +1,6 @@
 mod event;
 mod subprocess;
+mod tagger;
 
 use std::sync::mpsc;
 
