@@ -13,7 +13,7 @@ impl Query {
     }
 }
 
-pub fn fork_tagger(exec: PathBuf, query: Query) -> std::io::Result<std::process::Output> {
+pub fn run_tagger(exec: &PathBuf, query: Query) -> std::io::Result<std::process::Output> {
     std::process::Command::new(exec)
         .arg(query.path)
         .output()

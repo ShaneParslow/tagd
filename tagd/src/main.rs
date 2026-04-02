@@ -1,4 +1,5 @@
 mod event;
+mod queue;
 mod subprocess;
 mod tagger;
 
@@ -8,11 +9,8 @@ fn main() {
     let (tx, rx) = mpsc::channel();
 
     event::spawn_event_providers(tx);
+    let taggers = tagger::scan_taggers();
 
-    while let Ok(msg) = rx.recv() {
-        println!("{msg:?}");
-        let query = subprocess::Query::init(msg.path);
-        let output = subprocess::fork_tagger("./std-mime".into(), query).expect("Failed to run tagger");
-        println!("{output:?}");
-    }
+    let queue = queue::Queue::init(taggers, rx);
+    queue.run();
 }
