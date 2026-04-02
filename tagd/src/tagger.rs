@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
-struct Tagger {
-    path: PathBuf,
+pub struct Tagger {
+    pub path: PathBuf,
 }
 
 impl Tagger {
@@ -15,6 +15,24 @@ impl Tagger {
         }
 
     }
+}
+
+// Scan the tagger directory for taggers.
+// Taggers must begin with "tagger-", must not contain '.', must be executable, and must
+// return success upon invocation with "--tagd-info"
+pub fn scan_taggers() -> Vec<Tagger> {
+    std::fs::read_dir(tagger_search_dir())
+        .into_iter()
+        .flatten()
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            let name = e.file_name();
+            let name = name.to_string_lossy();
+            name.starts_with("tagger-") && !name.contains('.')
+        })
+        .map(|e| e.path())
+        .filter_map(|e| Tagger::init(e))
+        .collect()
 }
 
 // Get directory of taggers
@@ -56,22 +74,4 @@ fn has_tagd_info(path: &Path) -> bool {
 
 fn is_tagger(path: &Path) -> bool {
     is_executable(path) && has_tagd_info(path)
-}
-
-// Scan the tagger directory for taggers.
-// Taggers must begin with "tagger-", must not contain '.', must be executable, and must
-// return success upon invocation with "--tagd-info"
-fn scan_taggers() -> Vec<Tagger> {
-    std::fs::read_dir(tagger_search_dir())
-        .into_iter()
-        .flatten()
-        .filter_map(|e| e.ok())
-        .filter(|e| {
-            let name = e.file_name();
-            let name = name.to_string_lossy();
-            name.starts_with("tagger-") && !name.contains('.')
-        })
-        .map(|e| e.path())
-        .filter_map(|e| Tagger::init(e))
-        .collect()
 }
