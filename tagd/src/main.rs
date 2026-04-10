@@ -2,6 +2,7 @@ mod event;
 mod queue;
 mod subprocess;
 mod tagger;
+mod db;
 
 use std::sync::mpsc;
 
