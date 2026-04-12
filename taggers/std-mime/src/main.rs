@@ -10,6 +10,7 @@ struct Tags {
 
 #[derive(Serialize)]
 struct Output {
+    tagger: &'static str,
     tags: Tags,
 }
 
@@ -52,6 +53,7 @@ fn main() {
     }
 
     let output = Output {
+        tagger: "std-mime",
         tags: Tags {
             mime,
         },
