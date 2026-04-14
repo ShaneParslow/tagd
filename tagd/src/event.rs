@@ -8,6 +8,7 @@ use std::thread;
 #[derive(Debug)]
 pub struct Event {
     pub path: PathBuf,
+    pub mtime: i64,
 }
 
 /// Create threads for all event providers

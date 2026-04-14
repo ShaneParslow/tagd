@@ -1,7 +1,10 @@
+use std::fs;
+use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::os::fd::{AsRawFd, BorrowedFd};
 use std::sync::mpsc;
 
+use anyhow::Result;
 use nix::fcntl::AT_FDCWD;
 use nix::sys::fanotify::{Fanotify, InitFlags, EventFFlags, MarkFlags, MaskFlags};
 
@@ -34,7 +37,8 @@ pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<Event>) {
             };
 
             let Some(path) = get_path(fd) else { continue };
-            tx.send(Event { path }).expect("Failed to add event to queue");
+            let Ok(mtime) = get_mtime(&path) else { continue };
+            tx.send(Event { path, mtime }).expect("Failed to add event to queue");
         }
     }
 }
@@ -49,4 +53,8 @@ fn get_path(fd: BorrowedFd) -> Option<PathBuf> {
         true => None,
         false => Some(path),
     }
+}
+
+fn get_mtime(path: &Path) -> Result<i64> {
+    Ok(fs::metadata(path)?.mtime())
 }
