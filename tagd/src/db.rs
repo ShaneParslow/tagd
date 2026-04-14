@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use anyhow::Result;
 use rusqlite::{Connection, params};
 
 pub struct Db {
@@ -7,7 +8,7 @@ pub struct Db {
 }
 
 impl Db {
-    pub fn init() -> rusqlite::Result<Db> {
+    pub fn init() -> Result<Db> {
         let conn = Connection::open(db_path())?;
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")?;
         conn.execute_batch(include_str!("schema.sql"))?;
@@ -15,7 +16,7 @@ impl Db {
     }
 
     /// Upsert file record, returns file_id
-    pub fn upsert_file(&self, path: &str, mtime: i64) -> rusqlite::Result<i64> {
+    pub fn upsert_file(&self, path: &str, mtime: i64) -> Result<i64> {
         self.conn.execute(
             "INSERT INTO files (path, mtime_at_tag, tagged_at)
              VALUES (?1, ?2, strftime('%s','now'))
@@ -26,7 +27,7 @@ impl Db {
     }
 
     /// Store tags from a single tagger run
-    pub fn set_tags(&self, file_id: i64, source: &str, tags: &[(String, String)]) -> rusqlite::Result<()> {
+    pub fn set_tags(&self, file_id: i64, source: &str, tags: &[(String, String)]) -> Result<()> {
         // Clear old tags from this source for this file
         self.conn.execute(
             "DELETE FROM tags WHERE file_id = ?1 AND source = ?2",
