@@ -1,4 +1,7 @@
+use anyhow::{Result, bail};
 use std::path::PathBuf;
+
+use tagd_core::Response;
 
 // Query that gets sent to tagger subprocess
 pub struct Query {
@@ -13,8 +16,12 @@ impl Query {
     }
 }
 
-pub fn run_tagger(exec: &PathBuf, query: Query) -> std::io::Result<std::process::Output> {
-    std::process::Command::new(exec)
+pub fn run_tagger(exec: &PathBuf, query: Query) -> Result<Response> {
+    let output = std::process::Command::new(exec)
         .arg(query.path)
-        .output()
+        .output()?;
+    if !output.status.success() { bail!("Tagger did not return success") };
+    let out = String::from_utf8(output.stdout)?;
+    println!("{out}");
+    Ok(serde_json::from_str(&out)?)
 }
