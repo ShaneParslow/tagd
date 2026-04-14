@@ -1,18 +1,8 @@
 use magic::{Cookie, cookie::Flags};
-use serde::Serialize;
 use std::env;
 use std::process;
 
-#[derive(Serialize)]
-struct Tags {
-    mime: String,
-}
-
-#[derive(Serialize)]
-struct Output {
-    tagger: &'static str,
-    tags: Tags,
-}
+use tagd_core::Response;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -52,14 +42,12 @@ fn main() {
         process::exit(1);
     }
 
-    let output = Output {
-        tagger: "std-mime",
-        tags: Tags {
-            mime,
-        },
+    let response = Response {
+        tagger: "std-mime".to_string(),
+        tags: vec![("mime".to_string(), mime)],
     };
 
-    let json = serde_json::to_string(&output).unwrap_or_else(|err| {
+    let json = serde_json::to_string(&response).unwrap_or_else(|err| {
         eprintln!("Failed to serialize JSON: {}", err);
         process::exit(1);
     });
