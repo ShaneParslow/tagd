@@ -21,13 +21,18 @@ impl Queue {
     }
 
     pub fn run(&self) {
-        while let Ok(msg) = self.rx.recv() {
+        while let Ok(event) = self.rx.recv() {
             for tagger in &self.taggers {
-                println!("{msg:?}");
-                let query = subprocess::Query::init(msg.path.clone());
-                // Blocks
-                let output = subprocess::run_tagger(&tagger.path, query).expect("Failed to run tagger");
-                for tag in output.tags {
+                // Build query
+                let query = subprocess::Query::init(event.path.clone());
+                
+                // Run tagger - blocks
+                let response = subprocess::run_tagger(&tagger.path, query).expect("Failed to run tagger");
+                
+                // Update db
+                let file_id = self.db.upsert_file(event.path.to_str().expect("Invalid path"), event.mtime).expect("Failed to add file to db");
+                self.db.set_tags(file_id, &response.tagger, &response.tags).expect("Failed to set tags");
+                for tag in response.tags {
                     println!("{tag:?}");
                 }
             }
