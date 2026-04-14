@@ -3,6 +3,12 @@
 version = 4
 
 [[package]]
+name = "anyhow"
+version = "1.0.102"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
+
+[[package]]
 name = "bitflags"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -292,8 +298,19 @@ dependencies = [
 name = "tagd"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "nix",
  "rusqlite",
+ "serde",
+ "serde_json",
+ "tagd-core",
+]
+
+[[package]]
+name = "tagd-core"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -303,6 +320,7 @@ dependencies = [
  "magic",
  "serde",
  "serde_json",
+ "tagd-core",
 ]
 
 [[package]]
