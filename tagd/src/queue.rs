@@ -27,7 +27,7 @@ impl Queue {
                 let query = subprocess::Query::init(event.path.clone());
                 
                 // Run tagger - blocks
-                let response = subprocess::run_tagger(&tagger.path, query).expect("Failed to run tagger");
+                let Ok(response) = subprocess::run_tagger(&tagger.path, query) else { continue };
                 
                 // Update db
                 let file_id = self.db.upsert_file(event.path.to_str().expect("Invalid path"), event.mtime).expect("Failed to add file to db");
