@@ -17,13 +17,15 @@ impl Db {
 
     /// Upsert file record, returns file_id
     pub fn upsert_file(&self, path: &str, mtime: i64) -> Result<i64> {
-        self.conn.execute(
+        let id = self.conn.query_row(
             "INSERT INTO files (path, mtime_at_tag, tagged_at)
              VALUES (?1, ?2, strftime('%s','now'))
-             ON CONFLICT(path) DO UPDATE SET mtime_at_tag=?2, tagged_at=strftime('%s','now')",
+             ON CONFLICT(path) DO UPDATE SET mtime_at_tag=?2, tagged_at=strftime('%s','now')
+             RETURNING id",
             params![path, mtime],
+            |row| row.get(0),
         )?;
-        Ok(self.conn.last_insert_rowid())
+        Ok(id)
     }
 
     /// Store tags from a single tagger run
