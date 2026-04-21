@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tagd_core::Response;
 
@@ -16,7 +16,7 @@ impl Query {
     }
 }
 
-pub fn run_tagger(exec: &PathBuf, query: Query) -> Result<Response> {
+pub fn run_tagger(exec: &Path, query: Query) -> Result<Response> {
     let output = std::process::Command::new(exec)
         .arg(query.path)
         .output()?;
