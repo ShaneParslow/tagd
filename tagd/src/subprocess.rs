@@ -9,7 +9,7 @@ pub struct Query {
 }
 
 impl Query {
-    pub fn init(path: PathBuf) -> Query {
+    pub fn new(path: PathBuf) -> Query {
         Query {
             path,
         }

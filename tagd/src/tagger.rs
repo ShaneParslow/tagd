@@ -5,7 +5,7 @@ pub struct Tagger {
 }
 
 impl Tagger {
-    fn init(path: PathBuf) -> Option<Tagger> {
+    fn new(path: PathBuf) -> Option<Tagger> {
         match is_tagger(&path) {
             true => Some(
                 Tagger {
@@ -31,7 +31,7 @@ pub fn scan_taggers() -> Vec<Tagger> {
             name.starts_with("tagger-") && !name.contains('.')
         })
         .map(|e| e.path())
-        .filter_map(|e| Tagger::init(e))
+        .filter_map(|e| Tagger::new(e))
         .collect()
 }
 

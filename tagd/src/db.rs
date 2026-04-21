@@ -8,7 +8,7 @@ pub struct Db {
 }
 
 impl Db {
-    pub fn init() -> Result<Db> {
+    pub fn new() -> Result<Db> {
         let conn = Connection::open(db_path())?;
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")?;
         conn.execute_batch(include_str!("schema.sql"))?;

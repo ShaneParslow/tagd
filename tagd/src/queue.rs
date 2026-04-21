@@ -12,7 +12,7 @@ pub struct Queue {
 }
 
 impl Queue {
-    pub fn init(taggers: Vec<Tagger>, rx: mpsc::Receiver<Event>, db: Db) -> Self {
+    pub fn new(taggers: Vec<Tagger>, rx: mpsc::Receiver<Event>, db: Db) -> Self {
         Queue {
             taggers,
             rx,
@@ -27,7 +27,7 @@ impl Queue {
             
             for tagger in &self.taggers {
                 // Build query
-                let query = subprocess::Query::init(event.path.clone());
+                let query = subprocess::Query::new(event.path.clone());
                 
                 // Run tagger - blocks
                 let Ok(response) = subprocess::run_tagger(&tagger.path, query) else { continue };

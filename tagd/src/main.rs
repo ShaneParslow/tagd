@@ -13,8 +13,8 @@ fn main() {
 
     event::spawn_event_providers(tx);
     let taggers = tagger::scan_taggers();
-    let db = Db::init().expect("Failed to initialize database");
+    let db = Db::new().expect("Failed to initialize database");
 
-    let queue = queue::Queue::init(taggers, rx, db);
+    let queue = queue::Queue::new(taggers, rx, db);
     queue.run();
 }
