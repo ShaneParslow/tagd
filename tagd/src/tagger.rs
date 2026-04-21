@@ -6,14 +6,7 @@ pub struct Tagger {
 
 impl Tagger {
     fn new(path: PathBuf) -> Option<Tagger> {
-        match is_tagger(&path) {
-            true => Some(
-                Tagger {
-                    path,
-                }),
-            false => None,
-        }
-
+        is_tagger(&path).then(|| Tagger { path })
     }
 }
 
