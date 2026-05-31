@@ -14,7 +14,10 @@ impl Tagger {
 // Taggers must begin with "tagger-", must not contain '.', must be executable, and must
 // return success upon invocation with "--tagd-info"
 pub fn scan_taggers() -> Vec<Tagger> {
-    std::fs::read_dir(tagger_search_dir())
+    let search_dir = tagger_search_dir();
+    std::fs::create_dir_all(&search_dir).expect("Failed to create tagger directory");
+
+    std::fs::read_dir(&search_dir)
         .into_iter()
         .flatten()
         .filter_map(|e| e.ok())

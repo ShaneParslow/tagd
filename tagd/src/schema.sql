@@ -16,4 +16,4 @@ CREATE TABLE IF NOT EXISTS tags (
 CREATE INDEX IF NOT EXISTS idx_tags_kv ON tags(key, value);
 -- Explicit: path is a critical lookup key
 -- technically redundant since UNIQUE makes index in sqlite
-CREATE INDEX IF NOT EXISTS idx_files_path ON files(path); 
+CREATE INDEX IF NOT EXISTS idx_files_path ON files(path);
