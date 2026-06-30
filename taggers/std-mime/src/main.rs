@@ -2,7 +2,7 @@ use magic::{Cookie, cookie::Flags};
 use std::env;
 use std::process;
 
-use tagd_core::Response;
+use tagd_core::TaggerResponse;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -42,7 +42,7 @@ fn main() {
         process::exit(1);
     }
 
-    let response = Response {
+    let response = TaggerResponse {
         tagger: "std-mime".to_string(),
         tags: vec![("mime".to_string(), mime)],
     };

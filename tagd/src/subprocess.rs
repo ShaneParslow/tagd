@@ -1,7 +1,7 @@
 use anyhow::{Result, bail};
 use std::path::{Path, PathBuf};
 
-use tagd_core::Response;
+use tagd_core::TaggerResponse;
 
 // Query that gets sent to tagger subprocess
 pub struct Query {
@@ -16,7 +16,7 @@ impl Query {
     }
 }
 
-pub fn run_tagger(exec: &Path, query: Query) -> Result<Response> {
+pub fn run_tagger(exec: &Path, query: Query) -> Result<TaggerResponse> {
     let output = std::process::Command::new(exec)
         .arg(query.path)
         .output()?;
