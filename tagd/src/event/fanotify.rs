@@ -5,8 +5,6 @@ use std::sync::mpsc;
 use nix::fcntl::AT_FDCWD;
 use nix::sys::fanotify::{Fanotify, InitFlags, EventFFlags, MarkFlags, MaskFlags};
 
-use crate::event::Event;
-
 /// Initialize nix Fanotify group and apply mark for entire filesystem
 pub fn fan_provider_init() -> Fanotify {
     let flags = InitFlags::FAN_UNLIMITED_QUEUE | InitFlags::FAN_CLOEXEC;
@@ -23,7 +21,7 @@ pub fn fan_provider_init() -> Fanotify {
 }
 
 /// Loop for fanotify event provider thread
-pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<Event>) {
+pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<PathBuf>) {
     loop {
         let events = fa.read_events().expect("Failed to read fanotify events");
 
@@ -34,7 +32,7 @@ pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<Event>) {
             };
 
             let Some(path) = get_path(fd) else { continue };
-            tx.send(Event{ path }).expect("Failed to add event to queue");
+            tx.send(path).expect("Failed to add event to queue");
         }
     }
 }
