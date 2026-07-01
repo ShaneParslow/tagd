@@ -1,5 +1,6 @@
 use magic::{Cookie, cookie::Flags};
 use std::env;
+use std::os::unix::fs::MetadataExt;
 use std::process;
 
 use tagd_core::{TaggerInfo, TaggerResponse};
@@ -23,6 +24,13 @@ fn main() {
     }
 
     let file_path = &args[1];
+
+    let mtime_before = std::fs::metadata(file_path)
+        .unwrap_or_else(|err| {
+            eprintln!("Failed to read file metadata: {}", err);
+            process::exit(1);
+        })
+        .mtime();
 
     let cookie = Cookie::open(Flags::MIME_TYPE).unwrap_or_else(|err| {
         eprintln!("Failed to initialize libmagic: {}", err);
@@ -48,9 +56,22 @@ fn main() {
         process::exit(1);
     }
 
+    let mtime_after = std::fs::metadata(file_path)
+        .unwrap_or_else(|err| {
+            eprintln!("Failed to read file metadata: {}", err);
+            process::exit(1);
+        })
+        .mtime();
+
+    if mtime_before != mtime_after {
+        eprintln!("File was modified during tagging");
+        process::exit(1);
+    }
+
     let response = TaggerResponse {
         tagger: "std-mime".to_string(),
         tags: vec![("mime".to_string(), mime)],
+        mtime_at_tag: mtime_before,
     };
 
     let json = serde_json::to_string(&response).unwrap_or_else(|err| {
