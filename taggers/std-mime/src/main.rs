@@ -2,12 +2,18 @@ use magic::{Cookie, cookie::Flags};
 use std::env;
 use std::process;
 
-use tagd_core::TaggerResponse;
+use tagd_core::{TaggerInfo, TaggerResponse};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() == 2 && args[1] == "--tagd-info" {
+        let info = TaggerInfo {
+            name: "std-mime".to_string(),
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            keys: vec!["mime".to_string()],
+        };
+        println!("{}", serde_json::to_string(&info).unwrap());
         process::exit(0);
     }
 
