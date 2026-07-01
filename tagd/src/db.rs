@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use rusqlite::{Connection, params};
+use tagd_core::TaggerResponse;
 
 pub struct Db {
     conn: Connection,
@@ -15,54 +16,43 @@ impl Db {
         Ok(Db { conn })
     }
 
-    /// Upsert file record, returns file_id
-    pub fn upsert_file(&self, path: &str, mtime: i64) -> Result<i64> {
-        let id = self.conn.query_row(
-            "INSERT INTO files (path, mtime_at_tag, tagged_at)
-             VALUES (?1, ?2, strftime('%s','now'))
-             ON CONFLICT(path) DO UPDATE SET mtime_at_tag=?2, tagged_at=strftime('%s','now')
+    pub fn set_tags(&self, path: &str, response: &TaggerResponse) -> Result<()> {
+        let file_id: i64 = self.conn.query_row(
+            "INSERT INTO files (path) VALUES (?1)
+             ON CONFLICT(path) DO UPDATE SET path=excluded.path
              RETURNING id",
-            params![path, mtime],
+            params![path],
             |row| row.get(0),
         )?;
-        Ok(id)
-    }
 
-    /// Store tags from a single tagger run
-    pub fn set_tags(&self, file_id: i64, source: &str, tags: &[(String, String)]) -> Result<()> {
-        // Clear old tags from this source for this file
-        self.conn.execute(
-            "DELETE FROM tags WHERE file_id = ?1 AND source = ?2",
-            params![file_id, source],
-        )?;
         let mut stmt = self.conn.prepare_cached(
-            "INSERT INTO tags (file_id, key, value, source) VALUES (?1, ?2, ?3, ?4)"
+            "INSERT INTO tags (file_id, key, value, source, mtime_at_tag, tagged_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, strftime('%s','now'))
+             ON CONFLICT(file_id, key, source) DO UPDATE SET
+               value=excluded.value,
+               mtime_at_tag=excluded.mtime_at_tag,
+               tagged_at=excluded.tagged_at",
         )?;
-        for (k, v) in tags {
-            stmt.execute(params![file_id, k, v, source])?;
+        for (k, v) in &response.tags {
+            stmt.execute(params![file_id, k, v, response.tagger, response.mtime_at_tag])?;
         }
         Ok(())
     }
 }
 
-// Get path to tag database
 fn db_path() -> PathBuf {
-    // Runtime env override
     if let Ok(path) = std::env::var("TAGD_DB_PATH") {
         return PathBuf::from(path);
     }
 
-    // Debug build default search path
     #[cfg(debug_assertions)]
     {
-        // All workspace binaries end up here
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent().unwrap()  // workspace root
+            .parent().unwrap()
             .join("target/debug/tags.db");
         return path;
     }
 
-    // Release build default search path
     #[cfg(not(debug_assertions))]
     {
         PathBuf::from("/var/lib/tagd/tags.db")
