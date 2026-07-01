@@ -3,18 +3,22 @@ mod queue;
 mod subprocess;
 mod tagger;
 mod db;
+mod socket;
 
 use std::sync::mpsc;
 
-use crate::db::Db;
-
 fn main() {
+    // Event threads to queue channel
     let (tx, rx) = mpsc::channel();
 
-    event::spawn_event_providers(tx);
-    let taggers = tagger::scan_taggers();
-    let db = Db::new().expect("Failed to initialize database");
+    let taggers = tagger::scan_taggers(); // TODO: proper tagger registry tracking keys for each
 
-    let queue = queue::Queue::new(taggers, rx, db);
+    let queue = queue::Queue::new(taggers, rx);
+    
+    socket::spawn_socket_listener();
+    event::spawn_event_providers(tx);
+    
+
+
     queue.run();
 }

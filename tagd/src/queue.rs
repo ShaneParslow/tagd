@@ -12,7 +12,8 @@ pub struct Queue {
 }
 
 impl Queue {
-    pub fn new(taggers: Vec<Tagger>, rx: mpsc::Receiver<PathBuf>, db: Db) -> Self {
+    pub fn new(taggers: Vec<Tagger>, rx: mpsc::Receiver<PathBuf>) -> Self {
+        let db = Db::open().expect("Failed to initialize database");
         Queue {
             taggers,
             rx,
@@ -20,6 +21,7 @@ impl Queue {
         }
     }
 
+    // Loop forever recieving events from event threads and running all taggers on each event
     pub fn run(&self) {
         while let Ok(path) = self.rx.recv() {
             let path_s = path.to_str().expect("Invalid path");
