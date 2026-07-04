@@ -42,12 +42,11 @@ impl Db {
         )?;
 
         let mut stmt = self.conn.prepare_cached(
-            "INSERT INTO tags (file_id, key, value, source, mtime_at_tag, tagged_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, strftime('%s','now'))
-             ON CONFLICT(file_id, key, source) DO UPDATE SET
+            "INSERT INTO tags (file_id, key, value, source_tagger, mtime_at_tag)
+             VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(file_id, key, source_tagger) DO UPDATE SET
                value=excluded.value,
-               mtime_at_tag=excluded.mtime_at_tag,
-               tagged_at=excluded.tagged_at",
+               mtime_at_tag=excluded.mtime_at_tag",
         )?;
         for (k, v) in &response.tags {
             stmt.execute(params![file_id, k, v, response.tagger, response.mtime_at_tag])?;
@@ -69,7 +68,7 @@ impl Db {
         // no dedup needed. Returns each file's path and the mtime the tag is valid for.
         let mut stmt = self.conn.prepare_cached(
             "SELECT f.path, t.mtime_at_tag FROM files f JOIN tags t ON t.file_id = f.id
-             WHERE t.source = ?1 AND t.key = ?2 AND t.value = ?3",
+             WHERE t.source_tagger = ?1 AND t.key = ?2 AND t.value = ?3",
         )?;
         let rows = stmt
             .query_map(params![tagger, key, value], |row| {
