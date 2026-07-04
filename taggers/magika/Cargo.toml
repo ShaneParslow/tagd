@@ -1,0 +1,18 @@
+[package]
+name = "tagd-magika"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "tagger-magika"
+path = "src/main.rs"
+
+[dependencies]
+tagd-core = { path = "../../tagd-core" }
+
+magika = "1.1.0"
+# magika defers ONNX Runtime linking to the final binary. The default `ort`
+# features download/link a prebuilt runtime; see https://ort.pyke.io/setup.
+ort = "=2.0.0-rc.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
