@@ -718,10 +718,9 @@ dependencies = [
 name = "tagd-magika"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "magika",
  "ort",
- "serde",
- "serde_json",
  "tagd-core",
 ]
 
@@ -729,9 +728,8 @@ dependencies = [
 name = "tagd-std-mime"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "magic",
- "serde",
- "serde_json",
  "tagd-core",
 ]
 

@@ -1,83 +1,50 @@
-use magic::{Cookie, cookie::Flags};
-use std::env;
-use std::os::unix::fs::MetadataExt;
-use std::process;
+use std::path::Path;
 
-use tagd_core::tagger::{TaggerInfo, TaggerResponse};
+use anyhow::{Result, anyhow, bail};
+use magic::{
+    Cookie,
+    cookie::{Flags, Load},
+};
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
+use tagd_core::tagger::{Tagger, TaggerInfo};
 
-    if args.len() == 2 && args[1] == "--tagd-info" {
-        let info = TaggerInfo {
+struct StdMime {
+    cookie: Cookie<Load>,
+}
+
+impl Tagger for StdMime {
+    fn info() -> TaggerInfo {
+        TaggerInfo {
             name: "std-mime".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
             keys: vec!["mime".to_string()],
-        };
-        println!("{}", serde_json::to_string(&info).unwrap());
-        process::exit(0);
+        }
     }
 
-    if args.len() != 2 {
-        eprintln!("Usage: {} <file_path>", args[0]);
-        process::exit(1);
+    fn new() -> Result<Self> {
+        // libmagic's error types aren't Send/Sync, so flatten them to strings.
+        let cookie = Cookie::open(Flags::MIME_TYPE)
+            .map_err(|e| anyhow!("failed to initialize libmagic: {e}"))?
+            .load(&Default::default())
+            .map_err(|e| anyhow!("failed to load magic database: {e}"))?;
+        Ok(StdMime { cookie })
     }
 
-    let file_path = &args[1];
+    fn tag(&mut self, path: &Path) -> Result<Vec<(String, String)>> {
+        let mime = self
+            .cookie
+            .file(path)
+            .map_err(|e| anyhow!("failed to determine MIME type: {e}"))?;
 
-    let mtime_before = std::fs::metadata(file_path)
-        .unwrap_or_else(|err| {
-            eprintln!("Failed to read file metadata: {}", err);
-            process::exit(1);
-        })
-        .mtime();
+        // HACK: .file will output "cannot open `path` (No such file or directory)" without returning an error
+        if mime.starts_with("cannot open") {
+            bail!("File does not exist");
+        }
 
-    let cookie = Cookie::open(Flags::MIME_TYPE).unwrap_or_else(|err| {
-        eprintln!("Failed to initialize libmagic: {}", err);
-        process::exit(1);
-    });
-
-    let database = Default::default();
-    let loaded_cookie = cookie.load(&database).unwrap_or_else(|err| {
-        eprintln!("Failed to load magic database: {}", err);
-        process::exit(1);
-    });
-
-    let mime_type = loaded_cookie.file(file_path).unwrap_or_else(|err| {
-        eprintln!("Failed to determine MIME type: {}", err);
-        process::exit(1);
-    });
-
-    let mime = mime_type.to_string();
-
-    // HACK: .file will output "cannot open `path` (No such file or directory)" without returning an error
-    if mime.starts_with("cannot open") {
-        eprintln!("File does not exist");
-        process::exit(1);
+        Ok(vec![("mime".to_string(), mime)])
     }
+}
 
-    let mtime_after = std::fs::metadata(file_path)
-        .unwrap_or_else(|err| {
-            eprintln!("Failed to read file metadata: {}", err);
-            process::exit(1);
-        })
-        .mtime();
-
-    if mtime_before != mtime_after {
-        eprintln!("File was modified during tagging");
-        process::exit(1);
-    }
-
-    let response = TaggerResponse {
-        tagger: "std-mime".to_string(),
-        tags: vec![("mime".to_string(), mime)],
-        mtime_at_tag: mtime_before,
-    };
-
-    let json = serde_json::to_string(&response).unwrap_or_else(|err| {
-        eprintln!("Failed to serialize JSON: {}", err);
-        process::exit(1);
-    });
-
-    println!("{}", json);
+fn main() {
+    tagd_core::tagger::run::<StdMime>()
 }
