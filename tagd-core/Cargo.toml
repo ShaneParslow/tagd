@@ -5,3 +5,11 @@ edition = "2024"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
+anyhow = { version = "1.0", optional = true }
+serde_json = { version = "1.0", optional = true }
+
+[features]
+# The tagger runtime: the `Tagger` trait and `run()` driver that turn a struct
+# into a tagger binary. Off by default so pure clients (tagctl) and the daemon
+# don't compile anyhow/serde_json they don't need. Taggers opt in.
+runtime = ["dep:anyhow", "dep:serde_json"]
