@@ -3,7 +3,7 @@ use std::os::unix::fs::MetadataExt;
 use std::process;
 
 use magika::Session;
-use tagd_core::{TaggerInfo, TaggerResponse};
+use tagd_core::tagger::{TaggerInfo, TaggerResponse};
 
 // One-shot tagger: load the Magika model, identify a single file, print JSON.
 //

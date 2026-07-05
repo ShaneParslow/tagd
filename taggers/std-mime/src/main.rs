@@ -3,7 +3,7 @@ use std::env;
 use std::os::unix::fs::MetadataExt;
 use std::process;
 
-use tagd_core::{TaggerInfo, TaggerResponse};
+use tagd_core::tagger::{TaggerInfo, TaggerResponse};
 
 fn main() {
     let args: Vec<String> = env::args().collect();

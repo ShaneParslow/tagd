@@ -1,7 +1,7 @@
 use anyhow::{Result, bail};
 use std::path::{Path, PathBuf};
 
-use tagd_core::TaggerResponse;
+use tagd_core::tagger::TaggerResponse;
 
 // Query that gets sent to tagger subprocess
 pub struct Query {

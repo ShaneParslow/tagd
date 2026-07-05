@@ -1,32 +1,10 @@
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::UnixListener;
-use std::path::PathBuf;
 use std::thread;
 
-use serde::{Deserialize, Serialize};
+use tagd_core::query::{socket_path, Request, FilesResponse, FileMatch};
 
 use crate::db::Db;
-
-#[derive(Deserialize)]
-#[serde(tag = "action", rename_all = "snake_case")]
-enum Request {
-    FilesByQualifiedTag {
-        tagger: String,
-        key: String,
-        value: String,
-    },
-}
-
-#[derive(Serialize)]
-struct FileMatch {
-    path: String,
-    mtime_at_tag: i64,
-}
-
-#[derive(Serialize)]
-struct FilesResponse {
-    files: Vec<FileMatch>,
-}
 
 pub fn spawn_socket_listener() {
     // Check for old socket file, wait for incoming streams and make handler threads for each.
@@ -95,22 +73,4 @@ fn handle_client(stream: std::os::unix::net::UnixStream) {
     };
 
     let _ = writeln!(writer, "{response_json}");
-}
-
-fn socket_path() -> PathBuf {
-    if let Ok(path) = std::env::var("TAGD_SOCKET_PATH") {
-        return PathBuf::from(path);
-    }
-
-    #[cfg(debug_assertions)]
-    {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent().unwrap()
-            .join("target/debug/tagd.sock")
-    }
-
-    #[cfg(not(debug_assertions))]
-    {
-        PathBuf::from("/run/tagd/tagd.sock")
-    }
 }

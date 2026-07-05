@@ -3,7 +3,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 use rusqlite::{Connection, params};
-use tagd_core::TaggerResponse;
+
+use tagd_core::tagger::TaggerResponse;
 
 /// A connection to the tag database.
 /// 
