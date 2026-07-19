@@ -3,9 +3,9 @@ use std::sync::mpsc;
 
 use anyhow::{Context, Result};
 
-use crate::tagger::Tagger;
-use crate::subprocess;
 use crate::db::Db;
+use crate::subprocess;
+use crate::tagger::Tagger;
 
 pub struct Queue {
     taggers: Vec<Tagger>,
@@ -16,11 +16,7 @@ pub struct Queue {
 impl Queue {
     pub fn new(taggers: Vec<Tagger>, rx: mpsc::Receiver<PathBuf>) -> Result<Self> {
         let db = Db::open().context("Failed to open database")?;
-        Ok(Queue {
-            taggers,
-            rx,
-            db,
-        })
+        Ok(Queue { taggers, rx, db })
     }
 
     // Loop forever recieving events from event threads and running all taggers on each event
@@ -29,7 +25,9 @@ impl Queue {
             let Some(path) = event.to_str() else { continue };
             for tagger in &self.taggers {
                 let query = subprocess::Query::new(event.clone());
-                let Ok(response) = subprocess::run_tagger(&tagger.path, query) else { continue };
+                let Ok(response) = subprocess::run_tagger(&tagger.path, query) else {
+                    continue;
+                };
                 if let Err(e) = self.db.set_tags(path, &response) {
                     eprintln!("ERR: Could not set tags ({})", e);
                 }

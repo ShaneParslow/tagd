@@ -1,10 +1,10 @@
-use std::path::{Path, PathBuf};
 use std::os::fd::{AsRawFd, BorrowedFd};
+use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 
 use anyhow::{Context, Result};
 use nix::fcntl::AT_FDCWD;
-use nix::sys::fanotify::{Fanotify, InitFlags, EventFFlags, MarkFlags, MaskFlags};
+use nix::sys::fanotify::{EventFFlags, Fanotify, InitFlags, MarkFlags, MaskFlags};
 
 /// Initialize nix Fanotify group and apply mark for entire filesystem
 pub fn fan_provider_init() -> Result<Fanotify> {
@@ -16,8 +16,9 @@ pub fn fan_provider_init() -> Result<Fanotify> {
     let mark_flags = MarkFlags::FAN_MARK_ADD | MarkFlags::FAN_MARK_FILESYSTEM;
     let mask_flags = MaskFlags::FAN_CLOSE_WRITE;
 
-    fa.mark(mark_flags, mask_flags, AT_FDCWD, Some(Path::new("."))).context("Failed to apply fanotify mark")?;
-    
+    fa.mark(mark_flags, mask_flags, AT_FDCWD, Some(Path::new(".")))
+        .context("Failed to apply fanotify mark")?;
+
     Ok(fa)
 }
 
@@ -30,7 +31,9 @@ pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<PathBuf>) {
             Err(e) => {
                 retry += 1;
                 eprintln!("WARN: Fanotify read_events() error: {e}");
-                if retry > 10 { panic!("Fanotify read_events() keeps erroring!") }
+                if retry > 10 {
+                    panic!("Fanotify read_events() keeps erroring!")
+                }
                 continue;
             }
         };
@@ -40,7 +43,7 @@ pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<PathBuf>) {
         for event in events {
             let Some(fd) = event.fd() else {
                 eprintln!("WARN: fanotify queue overflow - events have been dropped");
-                continue
+                continue;
             };
 
             let Some(path) = get_path(fd) else { continue };

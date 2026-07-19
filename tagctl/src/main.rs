@@ -4,7 +4,7 @@ use std::process;
 
 use clap::{Parser, Subcommand};
 
-use tagd_core::query::{socket_path, Request};
+use tagd_core::query::{Request, socket_path};
 
 /// A small client for the tagd daemon's Unix socket. Each subcommand maps to a
 /// single JSONL request/response round-trip.
@@ -43,7 +43,10 @@ fn main() {
 fn round_trip(request_json: &str) -> String {
     let path = socket_path();
     let stream = UnixStream::connect(&path).unwrap_or_else(|e| {
-        eprintln!("Failed to connect to tagd socket at {}: {e}", path.display());
+        eprintln!(
+            "Failed to connect to tagd socket at {}: {e}",
+            path.display()
+        );
         process::exit(1);
     });
 

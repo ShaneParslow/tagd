@@ -10,18 +10,16 @@ pub struct Query {
 
 impl Query {
     pub fn new(path: PathBuf) -> Query {
-        Query {
-            path,
-        }
+        Query { path }
     }
 }
 
 pub fn run_tagger(exec: &Path, query: Query) -> Result<TaggerResponse> {
-    let output = std::process::Command::new(exec)
-        .arg(query.path)
-        .output()?;
-    if !output.status.success() { bail!("Tagger did not return success") };
+    let output = std::process::Command::new(exec).arg(query.path).output()?;
+    if !output.status.success() {
+        bail!("Tagger did not return success")
+    };
     let out = String::from_utf8(output.stdout)?;
-    println!("{out}");
+    println!("{out}"); // TODO: log
     Ok(serde_json::from_str(&out)?)
 }

@@ -54,7 +54,7 @@ mod runtime {
     /// ```ignore
     /// fn main() { tagd_core::run::<MyTagger>() }
     /// ```
-    /// 
+    ///
     /// Handles argument parsing, `--tagd-info`, mtime consistency, and serialization.
     pub fn run<T: Tagger>() -> ! {
         let args: Vec<String> = env::args().collect();

@@ -13,13 +13,13 @@ impl Tagger {
 }
 
 /// Scans the tagger directory for taggers.
-/// 
+///
 /// Taggers must begin with `tagger-`, must not contain `.`, must be executable, and must
 /// return success upon invocation with `--tagd-info`
 pub fn scan_taggers() -> Result<Vec<Tagger>> {
     let search_dir = tagger_search_dir();
     std::fs::create_dir_all(&search_dir)
-    .with_context(|| format!("Failed to create tagger directory: {:?}", search_dir))?;
+        .with_context(|| format!("Failed to create tagger directory: {:?}", search_dir))?;
 
     Ok(std::fs::read_dir(&search_dir)
         .with_context(|| format!("Failed to read tagger directory: {:?}", search_dir))?
@@ -45,7 +45,8 @@ fn tagger_search_dir() -> PathBuf {
     {
         // All workspace binaries end up here
         let target_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent().unwrap()  // workspace root
+            .parent()
+            .unwrap() // workspace root
             .join("target/debug");
         return target_dir;
     }

@@ -4,7 +4,7 @@ use std::thread;
 
 use anyhow::{Context, Result};
 
-use tagd_core::query::{socket_path, Request, FilesResponse, FileMatch};
+use tagd_core::query::{FileMatch, FilesResponse, Request, socket_path};
 
 use crate::db::Db;
 
@@ -27,7 +27,9 @@ pub fn spawn_socket_listener() -> Result<()> {
         // Never returns: UnixListener::incoming blocks.
         for stream in listener.incoming() {
             match stream {
-                Ok(stream) => { thread::spawn(move || handle_client(stream)); },
+                Ok(stream) => {
+                    thread::spawn(move || handle_client(stream));
+                }
                 Err(e) => eprintln!("WARN: Socket accept error: {}", e),
             }
         }
