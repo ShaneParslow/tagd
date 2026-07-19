@@ -8,13 +8,14 @@ pub struct Tagger {
 
 impl Tagger {
     fn new(path: PathBuf) -> Option<Tagger> {
-        is_tagger(&path).then(|| Tagger { path })
+        is_tagger(&path).then(|| Tagger { path }) // TODO: log if tagger is ignored. maybe consolidate the separate starts_with("tagger-")?
     }
 }
 
-// Scan the tagger directory for taggers.
-// Taggers must begin with "tagger-", must not contain '.', must be executable, and must
-// return success upon invocation with "--tagd-info"
+/// Scans the tagger directory for taggers.
+/// 
+/// Taggers must begin with `tagger-`, must not contain `.`, must be executable, and must
+/// return success upon invocation with `--tagd-info`
 pub fn scan_taggers() -> Result<Vec<Tagger>> {
     let search_dir = tagger_search_dir();
     std::fs::create_dir_all(&search_dir)
@@ -29,11 +30,10 @@ pub fn scan_taggers() -> Result<Vec<Tagger>> {
             name.starts_with("tagger-") && !name.contains('.')
         })
         .map(|e| e.path())
-        .filter_map(|e| Tagger::new(e))
+        .filter_map(Tagger::new)
         .collect())
 }
 
-// Get directory of taggers
 fn tagger_search_dir() -> PathBuf {
     // Runtime env override
     if let Ok(dir) = std::env::var("TAGD_TAGGER_DIR") {
