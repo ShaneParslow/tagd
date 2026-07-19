@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context, Result};
+
 pub struct Tagger {
     pub path: PathBuf,
 }
@@ -13,13 +15,13 @@ impl Tagger {
 // Scan the tagger directory for taggers.
 // Taggers must begin with "tagger-", must not contain '.', must be executable, and must
 // return success upon invocation with "--tagd-info"
-pub fn scan_taggers() -> Vec<Tagger> {
+pub fn scan_taggers() -> Result<Vec<Tagger>> {
     let search_dir = tagger_search_dir();
-    std::fs::create_dir_all(&search_dir).expect("Failed to create tagger directory");
+    std::fs::create_dir_all(&search_dir)
+    .with_context(|| format!("Failed to create tagger directory: {:?}", search_dir))?;
 
-    std::fs::read_dir(&search_dir)
-        .into_iter()
-        .flatten()
+    Ok(std::fs::read_dir(&search_dir)
+        .with_context(|| format!("Failed to read tagger directory: {:?}", search_dir))?
         .filter_map(|e| e.ok())
         .filter(|e| {
             let name = e.file_name();
@@ -28,7 +30,7 @@ pub fn scan_taggers() -> Vec<Tagger> {
         })
         .map(|e| e.path())
         .filter_map(|e| Tagger::new(e))
-        .collect()
+        .collect())
 }
 
 // Get directory of taggers

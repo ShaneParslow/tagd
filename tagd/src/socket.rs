@@ -2,35 +2,37 @@ use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::UnixListener;
 use std::thread;
 
+use anyhow::{Context, Result};
+
 use tagd_core::query::{socket_path, Request, FilesResponse, FileMatch};
 
 use crate::db::Db;
 
-pub fn spawn_socket_listener() {
-    // Check for old socket file, wait for incoming streams and make handler threads for each.
+pub fn spawn_socket_listener() -> Result<()> {
+    let path = socket_path();
+    if path.exists() {
+        std::fs::remove_file(&path)
+        .with_context(|| format!("Failed to remove stale socket file at {:?}", path))?;
+    }
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+        .with_context(|| format!("Failed to create socket directory: {:?}", parent))?;
+    }
+    let listener = UnixListener::bind(&path)
+    .with_context(|| format!("Failed to bind Unix socket: {:?}", path))?;
+
     thread::spawn(move || {
-        let path = socket_path();
-
-        if path.exists() {
-            std::fs::remove_file(&path).expect("Failed to remove stale socket file");
-        }
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).expect("Failed to create socket directory");
-        }
-
-        let listener = UnixListener::bind(&path).expect("Failed to bind Unix socket");
-
         // Make handler thread for each incoming stream
         // Never returns since UnixListener::incoming blocks.
         for stream in listener.incoming() {
             match stream {
-                Ok(stream) => {
-                    thread::spawn(move || handle_client(stream));
-                }
+                Ok(stream) => { thread::spawn(move || handle_client(stream)); }
                 Err(e) => eprintln!("Socket accept error: {e}"),
             }
         }
     });
+
+    Ok(())
 }
 
 fn handle_client(stream: std::os::unix::net::UnixStream) {
