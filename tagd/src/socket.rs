@@ -51,7 +51,7 @@ fn handle_client(stream: std::os::unix::net::UnixStream) {
         return;
     }
 
-    let request = match serde_json::from_str::<Request>(line.trim()) {
+    let request: Request = match serde_json::from_str(line.trim()) {
         Ok(r) => r,
         Err(e) => {
             eprintln!("Bad socket request: {e}");

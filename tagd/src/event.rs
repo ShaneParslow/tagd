@@ -13,5 +13,9 @@ pub fn spawn_event_providers() -> Result<mpsc::Receiver<PathBuf>> {
     let fa = fanotify::fan_provider_init().context("Failed to start fanotify provider")?;
     thread::spawn(move || fanotify::fan_provider_exec(fa, tx));
 
+    // TODO: Slow filesystem scan for anything that got missed, thread to
+    // remove tags that are not in registry if current time - mtime over
+    // threshold. Maybe in pure sql?
+
     Ok(rx)
 }
