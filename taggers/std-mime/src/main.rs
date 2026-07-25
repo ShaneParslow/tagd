@@ -17,6 +17,7 @@ impl Tagger for StdMime {
         TaggerInfo {
             name: "std-mime".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            dependencies: vec![],
             keys: vec!["mime".to_string()],
         }
     }

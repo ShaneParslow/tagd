@@ -1,18 +1,23 @@
 use serde::{Deserialize, Serialize};
 
-/// Metadata a tagger reports for `--tagd-info`. Must be cheap to produce — the
-/// daemon queries it during discovery, so it must not load heavy models.
+/// Metadata a tagger reports for `--tagd-info`, with dependencies and keys
+/// that it provides. Dependencies are keys that must be applied before
+/// the tagger can run and optionally a value to filter incoming files.
 #[derive(Serialize, Deserialize)]
 pub struct TaggerInfo {
     pub name: String,
     pub version: String,
+    /// Tag keys that must run before this one, and optionally values to
+    /// filter.
+    pub dependencies: Vec<(String, Option<String>)>, //TODO: glob matching
+    /// Keys that this tagger provides.
     pub keys: Vec<String>,
 }
 
 /// The result of tagging one file, emitted as one JSON line.
 #[derive(Serialize, Deserialize)]
 pub struct TaggerResponse {
-    pub tagger: String,
+    pub tagger: String, // can remove now that taggerinfo has?
     pub tags: Vec<(String, String)>,
     pub mtime_at_tag: i64,
 }

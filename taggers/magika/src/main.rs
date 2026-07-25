@@ -19,6 +19,7 @@ impl Tagger for Magika {
         TaggerInfo {
             name: "magika".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            dependencies: vec![],
             keys: vec![
                 "mime".to_string(),
                 "label".to_string(),
