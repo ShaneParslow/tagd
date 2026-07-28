@@ -1,10 +1,10 @@
 use std::io::{BufRead, BufReader, Write};
-use std::os::unix::net::UnixListener;
+use std::os::unix::net::{UnixListener, UnixStream};
 use std::thread;
 
 use anyhow::{Context, Result};
 
-use tagd_core::query::{FileMatch, FilesResponse, Request, socket_path};
+use tagd_core::query::{Request, socket_path};
 
 use crate::db::Db;
 
@@ -38,46 +38,58 @@ pub fn spawn_socket_listener() -> Result<()> {
     Ok(())
 }
 
-// TODO: persistent connection, open db before loop to avoid overhead.
-fn handle_client(stream: std::os::unix::net::UnixStream) {
-    let mut writer = match stream.try_clone() {
-        Ok(w) => w,
-        Err(_) => return,
-    };
-    let mut reader = BufReader::new(stream);
-
-    let mut line = String::new();
-    if reader.read_line(&mut line).is_err() || line.is_empty() {
-        return;
-    }
-
-    let request: Request = match serde_json::from_str(line.trim()) {
-        Ok(r) => r,
+fn handle_client(stream: UnixStream) {
+    let db = match Db::open().context("ERR: Failed to open database for socket query") {
+        Ok(db) => db,
         Err(e) => {
-            eprintln!("Bad socket request: {e}");
-            // TODO: write error to socket
+            eprintln!("{e}");
             return;
         }
     };
 
-    let response_json = match request {
-        Request::FilesByQualifiedTag { tagger, key, value } => {
-            let db = match Db::open() {
-                Ok(db) => db,
-                Err(e) => {
-                    eprintln!("Failed to open database for query: {e}");
-                    return;
-                }
-            };
-            let files = db
-                .query_files_by_qualified_tag(&tagger, &key, &value) // TODO: handle error here. make response_json block a funct and use `?`?
-                .unwrap_or_default() // this is *definitely* not the right way to handle an error here...
-                .into_iter()
-                .map(|(path, mtime_at_tag)| FileMatch { path, mtime_at_tag })
-                .collect();
-            serde_json::to_string(&FilesResponse { files }).unwrap()
+    let mut writer = match stream.try_clone().context("ERR: Failed to clone stream for socket query") {
+        Ok(w) => w,
+        Err(e) => {
+            eprintln!("{e}");
+            return;
         }
     };
+    let mut reader = BufReader::new(stream);
+    
+    let mut line = String::new();
+    loop {
+        match reader.read_line(&mut line).context("WARN: Failed to read from socket") {
+            Ok(s) => {
+                if s == 0 { eprintln!("INFO: Socket EOF"); return }
+                if let Err(e) = handle_query(&db, &mut writer, &line) {
+                    eprintln!("{e}");
+                }
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                return;
+            }
+        }
+    }
+}
 
-    let _ = writeln!(writer, "{response_json}");
+fn handle_query(db: &Db, writer: &mut UnixStream, line: &String) -> Result<()> {
+    let request: Request = serde_json::from_str(line.trim())
+        .context("Failed to deserialize query")?;
+
+    let response = generate_response(db, request)
+        .context("Failed to generate response for query")?;
+
+    // TODO: Not atomic! If query modifies, not rolled back even though sending response failed.
+    writeln!(writer, "{response}").context("Failed to write query response")
+}
+
+fn generate_response(db: &Db, request: Request) -> Result<String> {
+    match request {
+        Request::FilesByQualifiedTag { tagger, key, value } => {
+            let files = db
+                .query_files_by_qualified_tag(&tagger, &key, &value)?;
+            serde_json::to_string(&files).context("Failed to serialize response")
+        }
+    }
 }
