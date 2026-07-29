@@ -4,7 +4,7 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 use rusqlite::{Connection, params};
 
-use tagd_core::tagger::TaggerResponse;
+use tagd_core::{query::{FileMatch, FilesResponse}, tagger::TaggerResponse};
 
 /// A connection to the tag database.
 ///
@@ -83,7 +83,7 @@ impl Db {
         tagger: &str,
         key: &str,
         value: &str,
-    ) -> Result<Vec<(String, i64)>> {
+    ) -> Result<FilesResponse> {
         let mut stmt = self
             .conn
             .prepare_cached(
@@ -92,15 +92,15 @@ impl Db {
             )
             .context("Failed to prepare select statement")?;
 
-        let rows = stmt
+        let files = stmt
             .query_map(params![tagger, key, value], |row| {
-                Ok((row.get(0)?, row.get(1)?))
+                Ok(FileMatch{ path: row.get(0)?, mtime_at_tag: row.get(1)? })
             })
             .context("Failed to execute select statement")?
-            .collect::<rusqlite::Result<Vec<(String, i64)>>>()
-            .context("Failed to collect paths")?;
+            .collect::<rusqlite::Result<Vec<FileMatch>>>()
+            .context("Failed to collect rows")?;
 
-        Ok(rows)
+        Ok(FilesResponse { files })
     }
 }
 
@@ -113,7 +113,7 @@ fn db_path() -> PathBuf {
     {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .parent()
-            .unwrap()
+            .unwrap() // workspace root
             .join("target/debug/tags.db");
         return path;
     }
