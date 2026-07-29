@@ -32,9 +32,10 @@ impl TaggerRegistry {
                     })
                     .ok()?
                     .path();
+                if !path.file_name()?.to_string_lossy().starts_with("tagger-") { return None }
                 let info = run_tagd_info(&path)
                     .inspect_err(|e| {
-                        eprintln!("Failed to run tagd-info on {:?}, skipping. ({})", path, e)
+                        eprintln!("Failed to run tagd-info on {:?}, skipping.\n{:?}", path, e)
                     })
                     .ok()?;
                 Some(Tagger { path, info })
