@@ -16,6 +16,6 @@ fn main() -> Result<()> {
     let rx = event::spawn_event_providers().context("Failed to start file event threads")?;
     let queue = queue::Queue::new(registry, rx).context("Failed to create queue")?;
 
-    queue.run();
+    queue.run()?;
     Ok(())
 }

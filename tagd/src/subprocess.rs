@@ -1,25 +1,22 @@
-use anyhow::{Result, bail};
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use std::process::Command;
+
+use anyhow::{Context, Result, bail};
 
 use tagd_core::tagger::TaggerResponse;
 
-// Query that gets sent to tagger subprocess
-pub struct Query {
-    path: PathBuf,
-}
+/// Runs a tagger binary against a single file and returns its parsed response.
+pub fn run_tagger(exec: &Path, path: &Path) -> Result<TaggerResponse> {
+    let output = Command::new(exec)
+        .arg(path)
+        .output()
+        .with_context(|| format!("Failed to spawn tagger {exec:?}"))?;
 
-impl Query {
-    pub fn new(path: PathBuf) -> Query {
-        Query { path }
-    }
-}
-
-pub fn run_tagger(exec: &Path, query: Query) -> Result<TaggerResponse> {
-    let output = std::process::Command::new(exec).arg(query.path).output()?;
     if !output.status.success() {
-        bail!("Tagger did not return success")
-    };
-    let out = String::from_utf8(output.stdout)?;
-    println!("{out}"); // TODO: log
-    Ok(serde_json::from_str(&out)?)
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        bail!("Tagger {exec:?} exited with {}: {}", output.status, stderr.trim());
+    }
+
+    serde_json::from_slice(&output.stdout)
+        .with_context(|| format!("Failed to parse response from tagger {exec:?}"))
 }
