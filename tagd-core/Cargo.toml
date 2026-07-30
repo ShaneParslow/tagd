@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
+wildmatch = "2.6"
 anyhow = { version = "1.0", optional = true }
 serde_json = { version = "1.0", optional = true }
 

@@ -1,7 +1,10 @@
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
 
 use anyhow::{Context, Result};
+
+use tagd_core::tagger::TagRequest;
 
 use crate::db::Db;
 use crate::registry::TaggerRegistry;
@@ -34,26 +37,66 @@ impl Queue {
                 continue;
             };
 
+            // Tags produced so far this run, so dependent taggers can read the
+            // values of the keys they depend on. Reset per file.
+            let mut resolved: BTreeMap<String, String> = BTreeMap::new();
+
             // Tagger deps graph is flattened to "stages" where a stage is a
             // set of taggers that can be run concurrently.
-            // TODO: pass upstream tag values into dependent taggers. honor
-            // the dependency value filter (glob) to skip invocations.
-            // concurrent tagger runs potentially with tokio for long-running
-            // taggers.
+            // TODO: run each stage's taggers concurrently (fold their tags into
+            // `resolved` after the stage joins), potentially with tokio for
+            // long-running taggers.
             for stage in &plan {
                 for tagger in stage {
-                    let response = match subprocess::run_tagger(&tagger.path, &path) {
+                    // Resolve declared dependencies against upstream tags,
+                    // applying each dependency's glob filter. If any is missing
+                    // or fails its filter, this tagger doesn't run on this file.
+                    let mut deps = Vec::new();
+                    let mut satisfied = true;
+                    for dep in &tagger.info.dependencies {
+                        let Some(value) = resolved.get(&dep.key) else {
+                            satisfied = false;
+                            break;
+                        };
+                        if !dep.accepts(value) {
+                            satisfied = false;
+                            break;
+                        }
+                        deps.push((dep.key.clone(), value.clone()));
+                    }
+                    if !satisfied {
+                        continue;
+                    }
+
+                    let request = TagRequest {
+                        path: path.clone(),
+                        deps,
+                    };
+                    let response = match subprocess::run_tagger(&tagger.path, &request)
+                        .with_context(|| {
+                            format!("ERR: tagger \"{}\" failed ({})", tagger.info.name, path_str)
+                        }) {
                         Ok(response) => response,
                         Err(e) => {
-                            eprintln!("ERR: tagger {} failed on {path_str}: {e:#}", tagger.info.name);
+                            eprintln!("{e}");
                             continue;
                         }
                     };
-                    if let Err(e) = self.db.set_tags(path_str, &response) {
-                        eprintln!(
-                            "ERR: failed to store tags for {path_str} from {}: {e:#}",
-                            tagger.info.name
-                        );
+
+                    // Make this tagger's tags visible to downstream dependents.
+                    // TODO: once taggers have priorities, resolve same-key
+                    // conflicts by priority rather than last-writer-wins.
+                    for (key, value) in &response.tags {
+                        resolved.insert(key.clone(), value.clone());
+                    }
+
+                    if let Err(e) = self.db.set_tags(path_str, &response).with_context(|| {
+                        format!(
+                            "ERR: failed to store tags for \"{}\" from \"{}\"",
+                            path_str, tagger.info.name
+                        )
+                    }) {
+                        eprintln!("{e}");
                     }
                 }
             }

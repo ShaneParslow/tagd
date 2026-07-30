@@ -33,7 +33,9 @@ impl TaggerRegistry {
                     })
                     .ok()?
                     .path();
-                if !path.file_name()?.to_string_lossy().starts_with("tagger-") { return None }
+                if !path.file_name()?.to_string_lossy().starts_with("tagger-") {
+                    return None;
+                }
                 let info = run_tagd_info(&path)
                     .inspect_err(|e| {
                         eprintln!("Failed to run tagd-info on {:?}, skipping.\n{:?}", path, e)
@@ -99,11 +101,11 @@ impl TaggerRegistry {
                 if !runnable[i] {
                     continue;
                 }
-                for (key, _filter) in &t.info.dependencies {
-                    if !provided_by_runnable(key, &runnable, i) {
+                for dep in &t.info.dependencies {
+                    if !provided_by_runnable(&dep.key, &runnable, i) {
                         eprintln!(
                             "Tagger {:?} depends on key {:?} which no runnable tagger provides, skipping.",
-                            t.info.name, key
+                            t.info.name, dep.key
                         );
                         runnable[i] = false;
                         changed = true;
@@ -126,8 +128,8 @@ impl TaggerRegistry {
                 continue;
             }
             let mut prereqs = HashSet::new();
-            for (key, _filter) in &t.info.dependencies {
-                for &p in providers.get(key.as_str()).into_iter().flatten() {
+            for dep in &t.info.dependencies {
+                for &p in providers.get(dep.key.as_str()).into_iter().flatten() {
                     if p != i && runnable[p] && prereqs.insert(p) {
                         dependents[p].push(i);
                         in_degree[i] += 1;

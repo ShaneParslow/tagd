@@ -364,26 +364,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e20f57f9918e5bd7bc58c22cdd70a6afc7375d4dd9683af5f2b34bd3d2bba619"
 
 [[package]]
-name = "magic"
-version = "0.16.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50ecbc2953846d9a3f8f6ed0700e66e49e5ad696eefb4e17fbaebbf457e1e752"
-dependencies = [
- "bitflags",
- "magic-sys",
-]
-
-[[package]]
-name = "magic-sys"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eff86ae08895140d628119d407d568f3b657145ee8c265878064f717534bb3bc"
-dependencies = [
- "libc",
- "vcpkg",
-]
-
-[[package]]
 name = "magika"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -841,6 +821,7 @@ dependencies = [
  "anyhow",
  "serde",
  "serde_json",
+ "wildmatch",
 ]
 
 [[package]]
@@ -850,15 +831,6 @@ dependencies = [
  "anyhow",
  "magika",
  "ort",
- "tagd-core",
-]
-
-[[package]]
-name = "tagd-std-mime"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "magic",
  "tagd-core",
 ]
 
@@ -1051,6 +1023,12 @@ checksum = "0d46a5a140e6f7afeccd8eae97eff335163939eac8b929834875168b29b3d267"
 dependencies = [
  "rustls-pki-types",
 ]
+
+[[package]]
+name = "wildmatch"
+version = "2.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29333c3ea1ba8b17211763463ff24ee84e41c78224c16b001cd907e663a38c68"
 
 [[package]]
 name = "winapi"
