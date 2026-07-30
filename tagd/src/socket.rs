@@ -47,7 +47,10 @@ fn handle_client(stream: UnixStream) {
         }
     };
 
-    let mut writer = match stream.try_clone().context("ERR: Failed to clone stream for socket query") {
+    let mut writer = match stream
+        .try_clone()
+        .context("ERR: Failed to clone stream for socket query")
+    {
         Ok(w) => w,
         Err(e) => {
             eprintln!("{e}");
@@ -55,12 +58,18 @@ fn handle_client(stream: UnixStream) {
         }
     };
     let mut reader = BufReader::new(stream);
-    
+
     let mut line = String::new();
     loop {
-        match reader.read_line(&mut line).context("WARN: Failed to read from socket") {
+        match reader
+            .read_line(&mut line)
+            .context("WARN: Failed to read from socket")
+        {
             Ok(s) => {
-                if s == 0 { eprintln!("INFO: Socket EOF"); return }
+                if s == 0 {
+                    eprintln!("INFO: Socket EOF");
+                    return;
+                }
                 if let Err(e) = handle_query(&db, &mut writer, &line) {
                     eprintln!("{e}");
                 }
@@ -77,8 +86,8 @@ fn handle_query(db: &Db, writer: &mut UnixStream, line: &str) -> Result<()> {
     let request: Request = serde_json::from_str(line.trim())
         .context("Failed to deserialize query")?;
 
-    let response = generate_response(db, request)
-        .context("Failed to generate response for query")?;
+    let response =
+        generate_response(db, request).context("Failed to generate response for query")?;
 
     // TODO: Not atomic! If query modifies, not rolled back even though sending response failed.
     writeln!(writer, "{response}").context("Failed to write query response")
@@ -87,8 +96,7 @@ fn handle_query(db: &Db, writer: &mut UnixStream, line: &str) -> Result<()> {
 fn generate_response(db: &Db, request: Request) -> Result<String> {
     match request {
         Request::FilesByQualifiedTag { tagger, key, value } => {
-            let files = db
-                .query_files_by_qualified_tag(&tagger, &key, &value)?;
+            let files = db.query_files_by_qualified_tag(&tagger, &key, &value)?;
             serde_json::to_string(&files).context("Failed to serialize response")
         }
     }

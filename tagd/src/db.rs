@@ -4,7 +4,10 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 use rusqlite::{Connection, params};
 
-use tagd_core::{query::{FileMatch, FilesResponse}, tagger::TaggerResponse};
+use tagd_core::{
+    query::{FileMatch, FilesResponse},
+    tagger::TaggerResponse,
+};
 
 /// A connection to the tag database.
 ///
@@ -94,7 +97,10 @@ impl Db {
 
         let files = stmt
             .query_map(params![tagger, key, value], |row| {
-                Ok(FileMatch{ path: row.get(0)?, mtime_at_tag: row.get(1)? })
+                Ok(FileMatch {
+                    path: row.get(0)?,
+                    mtime_at_tag: row.get(1)?,
+                })
             })
             .context("Failed to execute select statement")?
             .collect::<rusqlite::Result<Vec<FileMatch>>>()
