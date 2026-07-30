@@ -65,11 +65,10 @@ fn tagger_search_dir() -> PathBuf {
     #[cfg(debug_assertions)]
     {
         // All workspace binaries end up here
-        let target_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .unwrap() // workspace root
-            .join("target/debug");
-        return target_dir;
+            .join("target/debug")
     }
 
     // Release build default search path

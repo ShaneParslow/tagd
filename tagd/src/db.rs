@@ -111,11 +111,10 @@ fn db_path() -> PathBuf {
 
     #[cfg(debug_assertions)]
     {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .unwrap() // workspace root
-            .join("target/debug/tags.db");
-        return path;
+            .join("target/debug/tags.db")
     }
 
     #[cfg(not(debug_assertions))]

@@ -73,7 +73,7 @@ fn handle_client(stream: UnixStream) {
     }
 }
 
-fn handle_query(db: &Db, writer: &mut UnixStream, line: &String) -> Result<()> {
+fn handle_query(db: &Db, writer: &mut UnixStream, line: &str) -> Result<()> {
     let request: Request = serde_json::from_str(line.trim())
         .context("Failed to deserialize query")?;
 
