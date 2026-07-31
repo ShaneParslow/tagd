@@ -168,7 +168,7 @@ mod runtime {
         let mut tagger = match T::new() {
             Ok(t) => t,
             Err(e) => {
-                eprintln!("Failed to initialize tagger: {e}");
+                eprintln!("Failed to initialize tagger: {e:#}");
                 process::exit(1);
             }
         };

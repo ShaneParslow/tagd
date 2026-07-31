@@ -37,9 +37,8 @@ impl TaggerRegistry {
                     return None;
                 }
                 let info = run_tagd_info(&path)
-                    .inspect_err(|e| {
-                        eprintln!("Failed to run tagd-info on {:?}, skipping.\n{:?}", path, e)
-                    })
+                    .with_context(|| format!("Failed to run --tagd-info on {:?}, skipping...", path))
+                    .inspect_err(|e| { eprintln!("{:#}", e) })
                     .ok()?;
                 Some(Tagger { path, info })
             })

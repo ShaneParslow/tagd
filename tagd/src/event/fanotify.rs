@@ -55,7 +55,7 @@ pub fn fan_provider_exec(fa: Fanotify, tx: mpsc::Sender<PathBuf>) {
 /// Get path from fd via proc
 fn get_path(fd: BorrowedFd) -> Option<PathBuf> {
     let path = std::fs::read_link(format!("/proc/self/fd/{}", fd.as_raw_fd()))
-        .inspect_err(|e| eprintln!("WARN: Fanotify failed to get path from fd: {e}"))
+        .inspect_err(|e| eprintln!("WARN: Fanotify failed to get path from fd: {e:#}"))
         .ok()?;
 
     // HACK: A path ending with " (deleted)" is actually valid, but this is how proc conveys

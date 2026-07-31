@@ -42,7 +42,7 @@ fn handle_client(stream: UnixStream) {
     let db = match Db::open().context("ERR: Failed to open database for socket query") {
         Ok(db) => db,
         Err(e) => {
-            eprintln!("{e}");
+            eprintln!("{e:#}");
             return;
         }
     };
@@ -53,7 +53,7 @@ fn handle_client(stream: UnixStream) {
     {
         Ok(w) => w,
         Err(e) => {
-            eprintln!("{e}");
+            eprintln!("{e:#}");
             return;
         }
     };
@@ -71,11 +71,11 @@ fn handle_client(stream: UnixStream) {
                     return;
                 }
                 if let Err(e) = handle_query(&db, &mut writer, &line) {
-                    eprintln!("{e}");
+                    eprintln!("{e:#}");
                 }
             }
             Err(e) => {
-                eprintln!("{e}");
+                eprintln!("{e:#}");
                 return;
             }
         }

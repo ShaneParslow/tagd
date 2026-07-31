@@ -78,7 +78,7 @@ impl Queue {
                         }) {
                         Ok(response) => response,
                         Err(e) => {
-                            eprintln!("{e}");
+                            eprintln!("{e:#}");
                             continue;
                         }
                     };
@@ -96,7 +96,7 @@ impl Queue {
                             path_str, tagger.info.name
                         )
                     }) {
-                        eprintln!("{e}");
+                        eprintln!("{e:#}");
                     }
                 }
             }
