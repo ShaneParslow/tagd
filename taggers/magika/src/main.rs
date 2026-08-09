@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anyhow::Result;
 use magika::Session;
 
@@ -21,6 +23,9 @@ impl Tagger for Magika {
             keys: vec![
                 "mime".to_string(),
                 "label".to_string(),
+                "group".to_string(),
+                "is-text".to_string(),
+                "ext-match".to_string(),
                 "magika-score".to_string(),
             ],
         }
@@ -34,12 +39,30 @@ impl Tagger for Magika {
     fn tag(&mut self, req: &TagRequest) -> Result<Vec<(String, String)>> {
         let file_type = self.session.identify_file_sync(&req.path)?;
         let info = file_type.info();
+
         Ok(vec![
             ("mime".to_string(), info.mime_type.to_string()),
             ("label".to_string(), info.label.to_string()),
+            ("group".to_string(), info.group.to_string()),
+            ("is-text".to_string(), info.is_text.to_string()),
+            ("ext-match".to_string(), ext_match(&req.path, info.extensions)),
             ("magika-score".to_string(), file_type.score().to_string()),
         ])
     }
+}
+
+/// Whether the file's extension is one magika expects for the content it
+/// actually found: `yes`, `no`, or `none` when the file has no extension or
+/// magika lists none for the type.
+fn ext_match(path: &Path, expected: &[&str]) -> String {
+    let Some(ext) = path.extension() else {
+        return "none".to_string();
+    };
+    if expected.is_empty() {
+        return "none".to_string();
+    }
+    let ext = ext.to_string_lossy().to_lowercase();
+    expected.iter().any(|e| e.eq_ignore_ascii_case(&ext)).to_string()
 }
 
 fn main() {
