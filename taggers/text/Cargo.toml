@@ -1,0 +1,13 @@
+[package]
+name = "tagd-text"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "tagger-text"
+path = "src/main.rs"
+
+[dependencies]
+tagd-core = { path = "../../tagd-core", features = ["runtime"] }
+
+anyhow = "1.0"
