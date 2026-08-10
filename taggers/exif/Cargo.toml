@@ -1,0 +1,16 @@
+[package]
+name = "tagd-exif"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "tagger-exif"
+path = "src/main.rs"
+
+[dependencies]
+tagd-core = { path = "../../tagd-core", features = ["runtime"] }
+
+anyhow = "1.0"
+# Pure Rust, no_std-friendly Exif parser. Reads JPEG/TIFF/PNG/WebP/HEIF/AVIF
+# containers itself, so this tagger does not need an image decoder.
+kamadak-exif = "0.6"
